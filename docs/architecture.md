@@ -54,3 +54,19 @@ CREATE TABLE IF NOT EXISTS history (
 - **Chronological Context Window:** `get_history(user_id, limit)` selects the most recent `limit` rows using `ORDER BY id DESC LIMIT ?2` and reverses the slice in memory so the LLM receives turns in chronological order.
 - **Companion Metadata Models:** `EmotionalArc` (`start_tone`, `current_tone`, `intimacy_level`) and `KeyMoment` (`timestamp_epoch_s`, `summary`, `emotional_significance`) model longitudinal relationship state.
 - **System Prompt Formatting:** `persona::format_prompt(persona, user_name)` combines the base persona template (`ALARA_DEFAULT_PERSONA` or custom override) with user-specific addressing directives as the leading `system` message.
+
+## LLM Provider Adapters
+
+All inference backends accept a normalized `ChatRequest` (`messages`, `model`, `temperature`, `max_tokens`) and return a `ChatResponse` (`content`, `model`).
+
+### Cohere API v2 Adapter
+
+- **Endpoint:** `POST https://api.cohere.com/v2/chat`
+- **Authentication:** `Authorization: Bearer <COHERE_API_KEY>`
+- **Mapping:** Serializes `ChatRequest` messages and generation parameters (`model`, `temperature`, `max_tokens`) and extracts the assistant text blocks from the v2 response message content array.
+
+### Runpod Serverless vLLM Adapter
+
+- **Endpoint:** `POST https://api.runpod.ai/v2/<RUNPOD_ENDPOINT_ID>/runsync`
+- **Authentication:** `Authorization: Bearer <RUNPOD_API_KEY>`
+- **Mapping:** Wraps OpenAI-compatible chat fields inside the Runpod `{ "input": { ... } }` envelope and parses generated output tokens from the synchronous worker response payload.
