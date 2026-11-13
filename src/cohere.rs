@@ -63,3 +63,20 @@ impl CohereProvider {
         self.base_url = base_url.into();
         self
     }
+
+    fn build_payload(&self, req: &ChatRequest) -> CohereChatRequest {
+        CohereChatRequest {
+            model: req.model.clone(),
+            messages: req
+                .messages
+                .iter()
+                .map(|m| CohereMessage {
+                    role: m.role.clone(),
+                    content: m.content.clone(),
+                })
+                .collect(),
+            temperature: req.temperature,
+            max_tokens: req.max_tokens,
+            stream: false,
+        }
+    }
