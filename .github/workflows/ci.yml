@@ -22,7 +22,22 @@ jobs:
     - name: Cargo test
       run: cargo test --verbose
     - name: Clippy lint
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --all-targets -- -D warnings
     - name: Verify atomic commits
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run: |
-        curl -s https://raw.githubusercontent.com/gok/verify-atomic/main/verify_atomic.sh | bash
+        python3 - <<'PY'
+        import os, re, subprocess, sys
+        base = os.environ.get("BASE_REF", "").strip()
+        rev = f"origin/{base}..HEAD" if base else "HEAD~1..HEAD"
+        emoji = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
+        shas = subprocess.check_output(["git", "rev-list", "--no-merges", rev], text=True).split()
+        for sha in shas:
+            stat = subprocess.check_output(["git", "show", "--numstat", "--format=", sha], text=True)
+            lines = sum(int(p[0]) + int(p[1]) for l in stat.splitlines() if len(p := l.split("\t")) == 3 and p[0].isdigit())
+            msg = subprocess.check_output(["git", "show", "-s", "--format=%B", sha], text=True)
+            if lines >= 30 or emoji.search(msg):
+                sys.exit(f"Atomic check failed on {sha[:7]}: {lines} lines")
+        print(f"Verified {len(shas)} atomic commit(s)")
+        PY
