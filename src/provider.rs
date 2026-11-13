@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub use crate::runpod::RunpodProvider;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ChatMessage {
     pub role: String,
