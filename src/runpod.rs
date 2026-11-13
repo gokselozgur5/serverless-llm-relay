@@ -22,3 +22,18 @@ struct RunpodSyncResponse {
     pub error: Option<String>,
 }
 
+pub fn extract_content(output: &serde_json::Value) -> Option<String> {
+    if let Some(text) = output.as_str() {
+        return Some(text.to_string());
+    }
+    if let Some(arr) = output.as_array() {
+        for item in arr {
+            if let Some(res) = extract_content(item) {
+                return Some(res);
+            }
+        }
+    }
+    None
+}
+
+
