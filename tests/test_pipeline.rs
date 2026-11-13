@@ -107,3 +107,22 @@ async fn test_pipeline_multi_turn_with_sqlite_memory_store() {
     assert_eq!(reqs[1].messages[2].content, "First");
     assert_eq!(reqs[1].messages[3].content, "Turn 2");
 }
+
+#[tokio::test]
+async fn test_pipeline_error_handling_and_input_validation() {
+    let store = MemoryStore::new_in_memory().expect("sqlite");
+    let provider = MockProvider::new(&["Recovered"]);
+    provider.fail_next.store(true, Ordering::SeqCst);
+    let pipeline = RelayPipeline::new(store, provider);
+
+    let err = pipeline.process("u3", "Sam", "   ").await.expect_err("empty input");
+    assert!(matches!(err, PipelineError::InvalidInput(_)));
+
+    let err = pipeline.process("u3", "Sam", "Hello").await.expect_err("provider fail");
+    assert!(matches!(err, PipelineError::Provider(_)));
+    assert!(pipeline.memory().get_history("u3", 10).expect("empty").is_empty());
+
+    let ok = pipeline.process("u3", "Sam", "Retry").await.expect("recovered");
+    assert_eq!(ok.content, "Recovered");
+    assert_eq!(pipeline.memory().get_history("u3", 10).expect("saved").len(), 2);
+}
