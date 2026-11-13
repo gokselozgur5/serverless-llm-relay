@@ -27,3 +27,18 @@ struct CohereChatRequest {
     max_tokens: u32,
     stream: bool,
 }
+
+#[derive(Debug, Deserialize)]
+struct CohereContentBlock {
+    text: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CohereResponseMessage {
+    content: Option<Vec<CohereContentBlock>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CohereChatResponse {
+    message: Option<CohereResponseMessage>,
+}
