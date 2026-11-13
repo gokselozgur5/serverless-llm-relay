@@ -146,3 +146,14 @@ impl LLMProvider for crate::cohere::CohereProvider {
         crate::cohere::CohereProvider::complete(self, request)
     }
 }
+
+impl LLMProvider for crate::runpod::RunpodProvider {
+    type Error = crate::runpod::RunpodError;
+
+    fn complete(
+        &self,
+        request: &ChatRequest,
+    ) -> impl std::future::Future<Output = Result<ChatResponse, Self::Error>> + Send {
+        crate::runpod::RunpodProvider::complete(self, request)
+    }
+}
