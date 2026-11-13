@@ -67,6 +67,31 @@ async fn start_mock_server(body: serde_json::Value) -> (String, tokio::task::Joi
     (format!("http://{addr}/v2"), handle)
 }
 
+#[tokio::test]
+async fn test_runpod_complete_success() {
+    let mock = json!({
+        "status": "COMPLETED",
+        "output": {"choices": [{"message": {"role": "assistant", "content": "vllm answer"}}]}
+    });
+    let (base_url, handle) = start_mock_server(mock).await;
+    let provider = serverless_llm_relay::RunpodProvider::new("test_key", "test-ep")
+        .with_base_url(base_url);
+    let req = serverless_llm_relay::provider::ChatRequest {
+        messages: vec![serverless_llm_relay::provider::ChatMessage {
+            role: "user".to_string(),
+            content: "hello".to_string(),
+        }],
+        model: "vllm-mistral".to_string(),
+        temperature: 0.7,
+        max_tokens: 128,
+    };
+    let res = provider.complete(&req).await.unwrap();
+    assert_eq!(res.content, "vllm answer");
+    assert_eq!(res.model, "vllm-mistral");
+    handle.abort();
+}
+
+
 
 
 
