@@ -80,3 +80,31 @@ impl CohereProvider {
             stream: false,
         }
     }
+
+    pub async fn complete(&self, req: &ChatRequest) -> Result<ChatResponse, CohereError> {
+        let url = format!("{}/chat", self.base_url);
+        let resp = self
+            .client
+            .post(&url)
+            .bearer_auth(&self.api_key)
+            .json(&self.build_payload(req))
+            .send()
+            .await?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let message = resp.text().await.unwrap_or_default();
+            return Err(CohereError::Api { status, message });
+        }
+        let body: CohereChatResponse = resp.json().await?;
+        let text = body
+            .message
+            .and_then(|m| m.content)
+            .and_then(|c| c.into_iter().next())
+            .and_then(|b| b.text)
+            .ok_or(CohereError::EmptyResponse)?;
+        Ok(ChatResponse {
+            content: text,
+            model: req.model.clone(),
+        })
+    }
+}
