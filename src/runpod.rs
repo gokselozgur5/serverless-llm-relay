@@ -46,5 +46,25 @@ pub fn extract_content(output: &serde_json::Value) -> Option<String> {
     output.get("text").and_then(|t| t.as_str()).map(|s| s.to_string())
 }
 
+#[derive(Clone, Debug)]
+pub struct RunpodProvider {
+    pub api_key: String,
+    pub endpoint_id: String,
+    pub base_url: String,
+    pub client: reqwest::Client,
+}
+
+impl RunpodProvider {
+    pub fn new(api_key: impl Into<String>, endpoint_id: impl Into<String>) -> Self {
+        Self {
+            api_key: api_key.into(),
+            endpoint_id: endpoint_id.into(),
+            base_url: "https://api.runpod.ai/v2".to_string(),
+            client: reqwest::Client::new(),
+        }
+    }
+}
+
+
 
 
