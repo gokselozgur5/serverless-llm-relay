@@ -22,3 +22,17 @@ Telegram Update JSON
         5. Persist user turn and assistant reply in MemoryStore
   --> Format outgoing Telegram message payload (chat_id, text)
 ```
+
+## Module Architecture
+
+| Module | Path | Responsibility |
+| :--- | :--- | :--- |
+| `config` | `src/config.rs` | Parses `PORT`, `DEFAULT_MODEL`, and provider credentials from environment variables. |
+| `provider` | `src/provider.rs` | Defines `ChatMessage`, `ChatRequest`, `ChatResponse`, and provider traits/adapters. |
+| `cohere` | `src/cohere.rs` | Sends chat completion requests to Cohere API v2 (`/v2/chat`). |
+| `runpod` | `src/runpod.rs` | Dispatches synchronous vLLM jobs to Runpod Serverless (`/v2/{id}/runsync`). |
+| `memory` | `src/memory/` | Manages SQLite conversation persistence (`MemoryStore`), `EmotionalArc`, and `KeyMoment`. |
+| `persona` | `src/persona.rs` | Renders companion system prompts personalized with the active user name. |
+| `telegram` | `src/telegram.rs` | Parses inbound Telegram `Update` payloads and formats outbound `sendMessage` bodies. |
+| `pipeline` | `src/pipeline.rs` | Orchestrates memory lookup, persona injection, LLM invocation, and history persistence. |
+| `gateway` | `src/gateway.rs` | Exposes Axum HTTP routes (`GET /health` and `POST /webhook/telegram`). |
