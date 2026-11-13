@@ -66,4 +66,25 @@ impl<P, M> RelayPipeline<P, M> {
             max_tokens: 512,
         }
     }
+
+    pub fn with_persona(mut self, persona: impl Into<String>) -> Self {
+        self.persona = persona.into();
+        self
+    }
+
+    pub fn with_model(mut self, model: impl Into<String>) -> Self {
+        self.model = model.into();
+        self
+    }
+
+    pub fn with_history_limit(mut self, limit: usize) -> Self {
+        self.history_limit = limit;
+        self
+    }
+
+    pub fn with_generation_params(mut self, temperature: f32, max_tokens: u32) -> Self {
+        self.temperature = temperature;
+        self.max_tokens = max_tokens;
+        self
+    }
 }
