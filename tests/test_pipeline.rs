@@ -22,3 +22,21 @@ impl MockProvider {
         }
     }
 }
+
+impl LLMProvider for MockProvider {
+    type Error = String;
+
+    fn complete(&self, request: &ChatRequest) -> Ready<Result<ChatResponse, Self::Error>> {
+        if self.fail_next.swap(false, Ordering::SeqCst) {
+            return ready(Err("upstream failure".to_string()));
+        }
+        self.requests.lock().expect("lock").push(request.clone());
+        let text = self
+            .replies
+            .lock()
+            .expect("lock")
+            .pop_front()
+            .unwrap_or_else(|| "fallback".to_string());
+        ready(Ok(ChatResponse { content: text, model: request.model.clone() }))
+    }
+}
