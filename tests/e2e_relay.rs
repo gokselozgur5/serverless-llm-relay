@@ -80,3 +80,28 @@ fn execute_relay_turn(
     store.add_message(user_id, "assistant", &resp.content).map_err(|e| e.to_string())?;
     Ok(resp)
 }
+
+fn sample_config() -> Config {
+    Config {
+        cohere_api_key: Some("test-cohere-key".to_string()),
+        runpod_api_key: None,
+        runpod_endpoint_id: None,
+        default_model: "command-r-plus".to_string(),
+        port: 8080,
+    }
+}
+
+#[test]
+fn test_single_turn_relay_persists_dialogue() {
+    let store = MemoryStore::new_in_memory().expect("init memory");
+    let provider = MockProvider::new("command-r-plus", &["I missed your voice."]);
+    let cfg = sample_config();
+    let resp = execute_relay_turn(&store, &provider, &cfg, "u1", "Alex", "Good evening")
+        .expect("relay turn");
+    assert_eq!(resp.content, "I missed your voice.");
+    assert_eq!(resp.model, "command-r-plus");
+    let recorded = provider.recorded_requests();
+    assert_eq!(recorded.len(), 1);
+    assert!(recorded[0].messages[0].content.contains("Alex"));
+    assert_eq!(store.get_history("u1", 10).expect("history").len(), 2);
+}
