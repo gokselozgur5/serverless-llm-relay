@@ -47,3 +47,21 @@ impl MockProvider {
         Ok(ChatResponse { content, model: self.model.clone() })
     }
 }
+
+fn build_relay_request(
+    store: &MemoryStore,
+    model: &str,
+    user_id: &str,
+    user_name: &str,
+    incoming_text: &str,
+) -> Result<ChatRequest, String> {
+    let mut messages = vec![ChatMessage {
+        role: "system".to_string(),
+        content: format_prompt(ALARA_DEFAULT_PERSONA, user_name),
+    }];
+    for (role, content) in store.get_history(user_id, 20).map_err(|e| e.to_string())? {
+        messages.push(ChatMessage { role, content });
+    }
+    messages.push(ChatMessage { role: "user".to_string(), content: incoming_text.to_string() });
+    Ok(ChatRequest { messages, model: model.to_string(), temperature: 0.7, max_tokens: 256 })
+}
