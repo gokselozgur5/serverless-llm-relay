@@ -1,14 +1,16 @@
 # serverless-llm-relay
 
-High-throughput serverless LLM relay, companion memory, and webhook bridge.
+High-throughput Rust LLM relay, companion memory store, and webhook bridge.
 
 ## Architecture
 
-```
-[Client / Webhook] ---> [Relay Gateway] ---> [Memory Store (SQLite / Vector)]
-                               |
-                               v
-                     [Serverless vLLM / Runpod]
+```text
+[Telegram / HTTP Client] ---> [Axum Gateway] ---> [Relay Pipeline]
+                                                       |
+                       +-------------------------------+-------------------------------+
+                       |                                                               |
+                       v                                                               v
+          [SQLite Memory & Persona]                                   [Cohere v2 / Runpod vLLM]
 ```
 
 ## Features
