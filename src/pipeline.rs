@@ -3,6 +3,8 @@ use std::sync::Mutex;
 use thiserror::Error;
 
 use crate::memory::MemoryStore;
+use crate::persona::{format_prompt, ALARA_DEFAULT_PERSONA};
+use crate::provider::{ChatMessage, ChatRequest, ChatResponse};
 pub use crate::provider::LLMProvider;
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -39,5 +41,29 @@ impl ConversationMemory for Mutex<MemoryStore> {
     fn save_message(&self, user_id: &str, role: &str, content: &str) -> Result<(), String> {
         let guard = self.lock().map_err(|e| e.to_string())?;
         guard.add_message(user_id, role, content).map_err(|e| e.to_string())
+    }
+}
+
+pub struct RelayPipeline<P, M = MemoryStore> {
+    memory: M,
+    provider: P,
+    persona: String,
+    model: String,
+    history_limit: usize,
+    temperature: f32,
+    max_tokens: u32,
+}
+
+impl<P, M> RelayPipeline<P, M> {
+    pub fn new(memory: M, provider: P) -> Self {
+        Self {
+            memory,
+            provider,
+            persona: ALARA_DEFAULT_PERSONA.to_string(),
+            model: "command-r".to_string(),
+            history_limit: 20,
+            temperature: 0.7,
+            max_tokens: 512,
+        }
     }
 }
