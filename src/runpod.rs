@@ -63,7 +63,19 @@ impl RunpodProvider {
             client: reqwest::Client::new(),
         }
     }
+
+    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
+        self.base_url = base_url.into();
+        self
+    }
+
+    pub fn from_config(config: &crate::Config) -> Result<Self, RunpodError> {
+        let api_key = config.runpod_api_key.as_deref().ok_or(RunpodError::MissingApiKey)?;
+        let endpoint_id = config.runpod_endpoint_id.as_deref().ok_or(RunpodError::MissingEndpointId)?;
+        Ok(Self::new(api_key, endpoint_id))
+    }
 }
+
 
 
 
