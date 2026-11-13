@@ -8,3 +8,20 @@ pub struct TelegramUser {
     pub last_name: Option<String>,
     pub username: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelegramChat {
+    pub id: i64,
+    #[serde(rename = "type")]
+    pub chat_type: String,
+    pub title: Option<String>,
+    pub username: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelegramIncomingMessage {
+    pub message_id: i64,
+    pub from: Option<TelegramUser>,
+    pub chat: TelegramChat,
+    pub text: Option<String>,
+}
