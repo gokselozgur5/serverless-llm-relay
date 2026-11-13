@@ -33,3 +33,28 @@ Runtime configuration is loaded from environment variables via `Config::from_env
 | `RUNPOD_API_KEY` | Conditional | `None` | Bearer API key for Runpod Serverless requests. |
 | `RUNPOD_ENDPOINT_ID` | Conditional | `None` | Target Runpod Serverless vLLM endpoint ID. |
 | `RUST_LOG` | No | `info` | Structured log filter for `tracing-subscriber`. |
+
+## HTTP Endpoints
+
+| Method | Path | Purpose | Response |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | Service liveness check | `200 OK` JSON health payload |
+| `POST` | `/webhook/telegram` | Telegram Update webhook | `200 OK` outgoing reply payload |
+
+Example webhook check:
+
+```bash
+curl -s http://localhost:8080/health
+
+curl -s -X POST http://localhost:8080/webhook/telegram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "update_id": 1001,
+    "message": {
+      "message_id": 42,
+      "chat": { "id": 987654321 },
+      "from": { "id": 987654321, "first_name": "Alex" },
+      "text": "Hello from Telegram"
+    }
+  }'
+```
