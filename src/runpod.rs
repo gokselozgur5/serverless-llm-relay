@@ -13,3 +13,12 @@ pub enum RunpodError {
     #[error("runpod error: {0}")]
     Api(String),
 }
+
+#[derive(Debug, serde::Deserialize)]
+struct RunpodSyncResponse {
+    pub id: Option<String>,
+    pub status: String,
+    pub output: Option<serde_json::Value>,
+    pub error: Option<String>,
+}
+
