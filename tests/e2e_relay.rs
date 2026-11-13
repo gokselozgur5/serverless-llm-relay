@@ -105,3 +105,20 @@ fn test_single_turn_relay_persists_dialogue() {
     assert!(recorded[0].messages[0].content.contains("Alex"));
     assert_eq!(store.get_history("u1", 10).expect("history").len(), 2);
 }
+
+#[test]
+fn test_multi_turn_relay_preserves_context() {
+    let store = MemoryStore::new_in_memory().expect("init memory");
+    let provider = MockProvider::new("command-r-plus", &["First reply", "Second reply"]);
+    let cfg = sample_config();
+    execute_relay_turn(&store, &provider, &cfg, "u1", "Alex", "Turn one").expect("turn 1");
+    let second = execute_relay_turn(&store, &provider, &cfg, "u1", "Alex", "Turn two")
+        .expect("turn 2");
+    assert_eq!(second.content, "Second reply");
+    let recorded = provider.recorded_requests();
+    assert_eq!(recorded.len(), 2);
+    assert_eq!(recorded[1].messages.len(), 4);
+    assert_eq!(recorded[1].messages[1].content, "Turn one");
+    assert_eq!(recorded[1].messages[2].content, "First reply");
+    assert_eq!(recorded[1].messages[3].content, "Turn two");
+}
