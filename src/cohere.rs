@@ -12,3 +12,18 @@ pub enum CohereError {
     #[error("Empty response")]
     EmptyResponse,
 }
+
+#[derive(Debug, Serialize)]
+struct CohereMessage {
+    role: String,
+    content: String,
+}
+
+#[derive(Debug, Serialize)]
+struct CohereChatRequest {
+    model: String,
+    messages: Vec<CohereMessage>,
+    temperature: f32,
+    max_tokens: u32,
+    stream: bool,
+}
