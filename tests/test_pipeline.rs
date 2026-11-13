@@ -88,3 +88,22 @@ async fn test_pipeline_with_mock_memory_and_provider() {
     assert_eq!(reqs[0].messages[3].content, "How are you?");
     assert_eq!(pipeline.memory().load_history("u1", 10).expect("hist").len(), 4);
 }
+
+#[tokio::test]
+async fn test_pipeline_multi_turn_with_sqlite_memory_store() {
+    let store = Mutex::new(MemoryStore::new_in_memory().expect("sqlite"));
+    let pipeline = RelayPipeline::new(store, MockProvider::new(&["First", "Second"]))
+        .with_history_limit(2);
+
+    let first = pipeline.relay("u2", "Dana", "Turn 1").await.expect("turn 1");
+    assert_eq!(first.content, "First");
+    let second = pipeline.relay("u2", "Dana", "Turn 2").await.expect("turn 2");
+    assert_eq!(second.content, "Second");
+
+    let reqs = pipeline.provider().requests.lock().expect("lock");
+    assert_eq!(reqs.len(), 2);
+    assert_eq!(reqs[1].messages.len(), 4);
+    assert_eq!(reqs[1].messages[1].content, "Turn 1");
+    assert_eq!(reqs[1].messages[2].content, "First");
+    assert_eq!(reqs[1].messages[3].content, "Turn 2");
+}
