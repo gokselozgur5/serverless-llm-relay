@@ -39,3 +39,23 @@ pub struct SendMessagePayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parse_mode: Option<String>,
 }
+
+pub struct TelegramAdapter;
+
+impl TelegramAdapter {
+    pub fn parse_update(payload: &str) -> Result<TelegramUpdate, serde_json::Error> {
+        serde_json::from_str(payload)
+    }
+
+    pub fn format_send_message(
+        chat_id: i64,
+        text: impl Into<String>,
+        parse_mode: Option<String>,
+    ) -> SendMessagePayload {
+        SendMessagePayload {
+            chat_id,
+            text: text.into(),
+            parse_mode,
+        }
+    }
+}
