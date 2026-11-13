@@ -77,3 +77,12 @@ docker run --rm -p 8080:8080 \
   -e COHERE_API_KEY="$COHERE_API_KEY" \
   serverless-llm-relay:latest
 ```
+
+## Telegram Webhook Registration
+
+Point the Telegram Bot API to your public HTTPS gateway endpoint:
+
+```bash
+curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
+  -d "url=https://<YOUR_DOMAIN>/webhook/telegram"
+```
