@@ -65,3 +65,18 @@ fn build_relay_request(
     messages.push(ChatMessage { role: "user".to_string(), content: incoming_text.to_string() });
     Ok(ChatRequest { messages, model: model.to_string(), temperature: 0.7, max_tokens: 256 })
 }
+
+fn execute_relay_turn(
+    store: &MemoryStore,
+    provider: &MockProvider,
+    cfg: &Config,
+    user_id: &str,
+    user_name: &str,
+    incoming_text: &str,
+) -> Result<ChatResponse, String> {
+    let req = build_relay_request(store, &cfg.default_model, user_id, user_name, incoming_text)?;
+    let resp = provider.complete(req)?;
+    store.add_message(user_id, "user", incoming_text).map_err(|e| e.to_string())?;
+    store.add_message(user_id, "assistant", &resp.content).map_err(|e| e.to_string())?;
+    Ok(resp)
+}
