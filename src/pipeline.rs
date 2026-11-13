@@ -29,3 +29,15 @@ impl ConversationMemory for MemoryStore {
         self.add_message(user_id, role, content).map_err(|e| e.to_string())
     }
 }
+
+impl ConversationMemory for Mutex<MemoryStore> {
+    fn load_history(&self, user_id: &str, limit: usize) -> Result<Vec<(String, String)>, String> {
+        let guard = self.lock().map_err(|e| e.to_string())?;
+        guard.get_history(user_id, limit).map_err(|e| e.to_string())
+    }
+
+    fn save_message(&self, user_id: &str, role: &str, content: &str) -> Result<(), String> {
+        let guard = self.lock().map_err(|e| e.to_string())?;
+        guard.add_message(user_id, role, content).map_err(|e| e.to_string())
+    }
+}
