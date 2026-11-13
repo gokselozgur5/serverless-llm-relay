@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::future::{ready, Ready};
+use std::future::{ready, Future};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
@@ -26,7 +26,7 @@ impl MockProvider {
 impl LLMProvider for MockProvider {
     type Error = String;
 
-    fn complete(&self, request: &ChatRequest) -> Ready<Result<ChatResponse, Self::Error>> {
+    fn complete(&self, request: &ChatRequest) -> impl Future<Output = Result<ChatResponse, Self::Error>> + Send {
         if self.fail_next.swap(false, Ordering::SeqCst) {
             return ready(Err("upstream failure".to_string()));
         }
