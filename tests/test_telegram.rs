@@ -14,3 +14,18 @@ fn test_parse_update_valid_message() {
     assert_eq!(from.id, 999);
     assert_eq!(from.first_name, "Alice");
 }
+
+#[test]
+fn test_format_send_message_payload() {
+    let payload = TelegramAdapter::format_send_message(
+        12345,
+        "Hello back from relay",
+        Some("MarkdownV2".to_string()),
+    );
+    assert_eq!(payload.chat_id, 12345);
+    assert_eq!(payload.text, "Hello back from relay");
+    assert_eq!(payload.parse_mode.as_deref(), Some("MarkdownV2"));
+    let json = serde_json::to_string(&payload).unwrap();
+    assert!(json.contains("\"chat_id\":12345"));
+    assert!(json.contains("\"parse_mode\":\"MarkdownV2\""));
+}
