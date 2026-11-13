@@ -88,3 +88,26 @@ impl<P, M> RelayPipeline<P, M> {
         self
     }
 }
+
+impl<P: LLMProvider, M: ConversationMemory> RelayPipeline<P, M> {
+    pub fn build_request(
+        &self,
+        user_id: &str,
+        user_name: &str,
+        user_input: &str,
+    ) -> Result<ChatRequest, PipelineError> {
+        if user_id.trim().is_empty() || user_input.trim().is_empty() {
+            return Err(PipelineError::InvalidInput("user_id and input required".into()));
+        }
+        let mut messages = vec![ChatMessage {
+            role: "system".to_string(),
+            content: format_prompt(&self.persona, user_name),
+        }];
+        let history = self.memory.load_history(user_id, self.history_limit).map_err(PipelineError::Memory)?;
+        for (role, content) in history {
+            messages.push(ChatMessage { role, content });
+        }
+        messages.push(ChatMessage { role: "user".to_string(), content: user_input.to_string() });
+        Ok(ChatRequest { messages, model: self.model.clone(), temperature: self.temperature, max_tokens: self.max_tokens })
+    }
+}
