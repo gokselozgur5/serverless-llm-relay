@@ -141,3 +141,24 @@ fn test_provider_failure_leaves_memory_clean_and_isolates_users() {
     assert_eq!(alice_hist[0].1, "Retry msg");
     assert_eq!(bob_hist[0].1, "Hi from Bob");
 }
+
+#[test]
+fn test_companion_memory_metadata_roundtrip() {
+    use serverless_llm_relay::memory::{EmotionalArc, KeyMoment};
+    let arc = EmotionalArc {
+        start_tone: "reserved".to_string(),
+        current_tone: "affectionate".to_string(),
+        intimacy_level: 0.85,
+    };
+    let moment = KeyMoment {
+        timestamp_epoch_s: 1_763_000_000,
+        summary: "Shared midnight rooftop conversation".to_string(),
+        emotional_significance: 0.92,
+    };
+    let arc_json = serde_json::to_string(&arc).expect("serialize arc");
+    let moment_json = serde_json::to_string(&moment).expect("serialize moment");
+    let decoded_arc: EmotionalArc = serde_json::from_str(&arc_json).expect("decode arc");
+    let decoded_moment: KeyMoment = serde_json::from_str(&moment_json).expect("decode moment");
+    assert_eq!(decoded_arc, arc);
+    assert_eq!(decoded_moment, moment);
+}
