@@ -33,7 +33,18 @@ pub fn extract_content(output: &serde_json::Value) -> Option<String> {
             }
         }
     }
-    None
+    if let Some(choices) = output.get("choices").and_then(|c| c.as_array()) {
+        for choice in choices {
+            if let Some(c) = choice.get("message").and_then(|m| m.get("content")).and_then(|s| s.as_str()) {
+                return Some(c.to_string());
+            }
+            if let Some(t) = choice.get("text").and_then(|s| s.as_str()) {
+                return Some(t.to_string());
+            }
+        }
+    }
+    output.get("text").and_then(|t| t.as_str()).map(|s| s.to_string())
 }
+
 
 
