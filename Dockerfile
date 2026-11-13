@@ -19,3 +19,20 @@ RUN mkdir -p src \
 COPY src ./src
 RUN cargo build --release --bin serverless-llm-relay \
     && strip target/release/serverless-llm-relay
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libssl3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --create-home --home-dir /app relay
+
+WORKDIR /app
+COPY --from=builder /app/target/release/serverless-llm-relay /usr/local/bin/serverless-llm-relay
+
+ENV PORT=8080 \
+    RUST_LOG=info
+
+USER relay
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/serverless-llm-relay"]
