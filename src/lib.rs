@@ -7,4 +7,4 @@ pub mod runpod;
 pub mod telegram;
 
 pub use config::Config;
-pub use runpod::RunpodError;
+pub use runpod::{RunpodError, RunpodProvider};
