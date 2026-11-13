@@ -25,3 +25,17 @@ pub struct TelegramIncomingMessage {
     pub chat: TelegramChat,
     pub text: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TelegramUpdate {
+    pub update_id: i64,
+    pub message: Option<TelegramIncomingMessage>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SendMessagePayload {
+    pub chat_id: i64,
+    pub text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parse_mode: Option<String>,
+}
