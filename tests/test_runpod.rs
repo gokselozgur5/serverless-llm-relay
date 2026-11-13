@@ -91,6 +91,30 @@ async fn test_runpod_complete_success() {
     handle.abort();
 }
 
+#[tokio::test]
+async fn test_runpod_complete_failed_status() {
+    let mock = json!({
+        "status": "FAILED",
+        "error": "GPU out of memory"
+    });
+    let (base_url, handle) = start_mock_server(mock).await;
+    let provider = serverless_llm_relay::RunpodProvider::new("test_key", "test-ep")
+        .with_base_url(base_url);
+    let req = serverless_llm_relay::provider::ChatRequest {
+        messages: vec![serverless_llm_relay::provider::ChatMessage {
+            role: "user".to_string(),
+            content: "hello".to_string(),
+        }],
+        model: "vllm-mistral".to_string(),
+        temperature: 0.7,
+        max_tokens: 128,
+    };
+    let err = provider.complete(&req).await.unwrap_err();
+    assert!(err.to_string().contains("GPU out of memory"));
+    handle.abort();
+}
+
+
 
 
 
