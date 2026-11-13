@@ -1,0 +1,19 @@
+# Version control and CI metadata
+.git
+.gitignore
+.github
+
+# Rust build artifacts
+target/
+
+# Local secrets, logs, and SQLite state
+.env
+.env.*
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Container definitions
+Dockerfile
+.dockerignore
