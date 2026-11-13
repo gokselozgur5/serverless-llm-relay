@@ -15,7 +15,8 @@ High-throughput Rust LLM relay, companion memory store, and webhook bridge.
 
 ## Features
 
-- Zero-idle compute cost via serverless backends (Runpod / vLLM / Cohere).
-- Stateful conversational context and user memory store.
-- Asynchronous streaming relay with backpressure.
-- Clean webhook adapters for Telegram, Discord, and HTTP clients.
+- Zero-idle GPU cost via Runpod Serverless (`/runsync`) and Cohere API v2 backends.
+- Per-user conversational history, emotional arc, and key moment models backed by SQLite.
+- Deterministic companion persona prompt formatting (`persona::format_prompt`).
+- Pure Rust async HTTP gateway built on Tokio, Axum, and Reqwest.
+- Detailed system design in [docs/architecture.md](docs/architecture.md).
