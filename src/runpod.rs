@@ -16,6 +16,7 @@ pub enum RunpodError {
 
 #[derive(Debug, serde::Deserialize)]
 struct RunpodSyncResponse {
+    #[allow(dead_code)]
     pub id: Option<String>,
     pub status: String,
     pub output: Option<serde_json::Value>,
@@ -74,7 +75,32 @@ impl RunpodProvider {
         let endpoint_id = config.runpod_endpoint_id.as_deref().ok_or(RunpodError::MissingEndpointId)?;
         Ok(Self::new(api_key, endpoint_id))
     }
+
+    pub async fn complete(
+        &self,
+        req: &crate::provider::ChatRequest,
+    ) -> Result<crate::provider::ChatResponse, RunpodError> {
+        let url = format!("{}/{}/runsync", self.base_url, self.endpoint_id);
+        let prompt = req.messages.last().map(|m| m.content.as_str()).unwrap_or("");
+        let payload = serde_json::json!({
+            "input": { "prompt": prompt, "messages": &req.messages, "temperature": req.temperature, "max_tokens": req.max_tokens }
+        });
+        let resp = self.client.post(&url)
+            .header("Authorization", format!("Bearer {}", self.api_key))
+            .json(&payload).send().await?;
+        if !resp.status().is_success() {
+            return Err(RunpodError::Api(format!("HTTP {}", resp.status())));
+        }
+        let parsed: RunpodSyncResponse = resp.json().await?;
+        if parsed.status != "COMPLETED" {
+            return Err(RunpodError::Api(parsed.error.unwrap_or(parsed.status)));
+        }
+        let out = parsed.output.ok_or_else(|| RunpodError::Api("missing output".to_string()))?;
+        let content = extract_content(&out).ok_or_else(|| RunpodError::Api("unknown output".to_string()))?;
+        Ok(crate::provider::ChatResponse { content, model: req.model.clone() })
+    }
 }
+
 
 
 
