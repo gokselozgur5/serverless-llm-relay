@@ -110,4 +110,28 @@ impl<P: LLMProvider, M: ConversationMemory> RelayPipeline<P, M> {
         messages.push(ChatMessage { role: "user".to_string(), content: user_input.to_string() });
         Ok(ChatRequest { messages, model: self.model.clone(), temperature: self.temperature, max_tokens: self.max_tokens })
     }
+
+    pub async fn process(
+        &self,
+        user_id: &str,
+        user_name: &str,
+        user_input: &str,
+    ) -> Result<ChatResponse, PipelineError> {
+        let request = self.build_request(user_id, user_name, user_input)?;
+        let response = self
+            .provider
+            .complete(&request)
+            .await
+            .map_err(|e| PipelineError::Provider(e.to_string()))?;
+        self.memory.save_message(user_id, "user", user_input).map_err(PipelineError::Memory)?;
+        self.memory.save_message(user_id, "assistant", &response.content).map_err(PipelineError::Memory)?;
+        Ok(response)
+    }
+
+    pub async fn relay(&self, user_id: &str, user_name: &str, user_input: &str) -> Result<ChatResponse, PipelineError> {
+        self.process(user_id, user_name, user_input).await
+    }
+
+    pub fn memory(&self) -> &M { &self.memory }
+    pub fn provider(&self) -> &P { &self.provider }
 }
