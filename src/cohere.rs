@@ -131,4 +131,16 @@ mod tests {
         assert_eq!(payload.messages.len(), 1);
         assert_eq!(payload.messages[0].role, "user");
     }
+
+    #[test]
+    fn test_deserialize_cohere_response() {
+        let raw = r#"{"message":{"content":[{"text":"Hello world"}]}}"#;
+        let parsed: CohereChatResponse = serde_json::from_str(raw).unwrap();
+        let text = parsed
+            .message
+            .and_then(|m| m.content)
+            .and_then(|c| c.into_iter().next())
+            .and_then(|b| b.text);
+        assert_eq!(text.as_deref(), Some("Hello world"));
+    }
 }
