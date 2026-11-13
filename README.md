@@ -58,3 +58,22 @@ curl -s -X POST http://localhost:8080/webhook/telegram \
     }
   }'
 ```
+
+## Build and Container Deployment
+
+Run checks and unit tests locally with Cargo:
+
+```bash
+cargo check && cargo test
+RUST_LOG=info PORT=8080 cargo run --release
+```
+
+Build and run the containerized release binary with Docker:
+
+```bash
+docker build -t serverless-llm-relay:latest .
+docker run --rm -p 8080:8080 \
+  -e DEFAULT_MODEL=command-r \
+  -e COHERE_API_KEY="$COHERE_API_KEY" \
+  serverless-llm-relay:latest
+```
