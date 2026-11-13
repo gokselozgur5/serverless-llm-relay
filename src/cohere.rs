@@ -42,3 +42,24 @@ struct CohereResponseMessage {
 struct CohereChatResponse {
     message: Option<CohereResponseMessage>,
 }
+
+#[derive(Debug, Clone)]
+pub struct CohereProvider {
+    api_key: String,
+    base_url: String,
+    client: reqwest::Client,
+}
+
+impl CohereProvider {
+    pub fn new(api_key: impl Into<String>) -> Self {
+        Self {
+            api_key: api_key.into(),
+            base_url: "https://api.cohere.com/v2".to_string(),
+            client: reqwest::Client::new(),
+        }
+    }
+
+    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
+        self.base_url = base_url.into();
+        self
+    }
