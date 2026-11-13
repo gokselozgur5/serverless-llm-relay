@@ -29,3 +29,17 @@ fn test_format_send_message_payload() {
     assert!(json.contains("\"chat_id\":12345"));
     assert!(json.contains("\"parse_mode\":\"MarkdownV2\""));
 }
+
+#[test]
+fn test_parse_update_without_optional_fields() {
+    let json = r#"{"update_id":1002,"message":{"message_id":43,"chat":{"id":-100,"type":"group"}}}"#;
+    let update = TelegramAdapter::parse_update(json).unwrap();
+    assert_eq!(update.update_id, 1002);
+    let msg = update.message.unwrap();
+    assert_eq!(msg.chat.id, -100);
+    assert_eq!(msg.text, None);
+    assert_eq!(msg.from, None);
+    let payload = TelegramAdapter::format_send_message(-100, "Group msg", None);
+    let json_out = serde_json::to_string(&payload).unwrap();
+    assert!(!json_out.contains("parse_mode"));
+}
