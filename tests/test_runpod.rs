@@ -53,5 +53,20 @@ fn test_runpod_from_config_success() {
     assert_eq!(provider.endpoint_id, "ep456");
 }
 
+async fn start_mock_server(body: serde_json::Value) -> (String, tokio::task::JoinHandle<()>) {
+    let app = axum::Router::new().route(
+        "/v2/test-ep/runsync",
+        axum::routing::post(move || {
+            let b = body.clone();
+            async move { axum::Json(b) }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap(); });
+    (format!("http://{addr}/v2"), handle)
+}
+
+
 
 
