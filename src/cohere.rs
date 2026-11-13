@@ -108,3 +108,27 @@ impl CohereProvider {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::provider::ChatMessage;
+
+    #[test]
+    fn test_payload_builder() {
+        let provider = CohereProvider::new("test-key");
+        let req = ChatRequest {
+            messages: vec![ChatMessage {
+                role: "user".into(),
+                content: "hello".into(),
+            }],
+            model: "command-r".into(),
+            temperature: 0.5,
+            max_tokens: 100,
+        };
+        let payload = provider.build_payload(&req);
+        assert_eq!(payload.model, "command-r");
+        assert_eq!(payload.messages.len(), 1);
+        assert_eq!(payload.messages[0].role, "user");
+    }
+}
