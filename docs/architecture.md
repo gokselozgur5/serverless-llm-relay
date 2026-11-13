@@ -70,3 +70,15 @@ All inference backends accept a normalized `ChatRequest` (`messages`, `model`, `
 - **Endpoint:** `POST https://api.runpod.ai/v2/<RUNPOD_ENDPOINT_ID>/runsync`
 - **Authentication:** `Authorization: Bearer <RUNPOD_API_KEY>`
 - **Mapping:** Wraps OpenAI-compatible chat fields inside the Runpod `{ "input": { ... } }` envelope and parses generated output tokens from the synchronous worker response payload.
+
+## HTTP Gateway Contracts
+
+- **`GET /health`:** Returns `200 OK` with `{ "status": "ok" }` for container orchestrators, load balancers, and readiness probes.
+- **`POST /webhook/telegram`:** Accepts a Telegram Bot API `Update` JSON body. Invalid JSON or updates missing text messages return deterministic `4xx` responses without panicking; valid messages execute `RelayPipeline` and return JSON `{ "chat_id": <id>, "text": "<reply>" }`.
+
+## Production Deployment Considerations
+
+1. **Container Runtime:** Build with a multi-stage Rust builder (`cargo build --release`) into a minimal Debian slim runtime image containing CA certificates (`ca-certificates`) for outbound TLS calls to Cohere, Runpod, and Telegram.
+2. **SQLite Durability:** `MemoryStore::new_in_memory()` provides fast ephemeral storage for stateless testing; production deployments persisting across restarts should mount a persistent volume for file-backed SQLite databases.
+3. **Concurrency Safety:** Because `rusqlite::Connection` is `!Sync`, shared Axum state wraps the store behind synchronization primitives (`Mutex` or dedicated async actor channel) while keeping outbound `reqwest` LLM calls outside lock guards.
+4. **Observability and Secrets:** Configure log verbosity via `RUST_LOG` (`tracing-subscriber`) and inject API keys strictly via secret environment variables rather than container build arguments.
