@@ -122,3 +122,22 @@ fn test_multi_turn_relay_preserves_context() {
     assert_eq!(recorded[1].messages[2].content, "First reply");
     assert_eq!(recorded[1].messages[3].content, "Turn two");
 }
+
+#[test]
+fn test_provider_failure_leaves_memory_clean_and_isolates_users() {
+    let store = MemoryStore::new_in_memory().expect("init memory");
+    let provider = MockProvider::new("command-r-plus", &["Recovered reply", "Bob reply"]);
+    let cfg = sample_config();
+    provider.set_fail_next(true);
+    let err = execute_relay_turn(&store, &provider, &cfg, "alice", "Alice", "Lost msg");
+    assert!(err.is_err());
+    assert!(store.get_history("alice", 10).expect("alice empty").is_empty());
+    execute_relay_turn(&store, &provider, &cfg, "alice", "Alice", "Retry msg").expect("retry");
+    execute_relay_turn(&store, &provider, &cfg, "bob", "Bob", "Hi from Bob").expect("bob");
+    let alice_hist = store.get_history("alice", 10).expect("alice hist");
+    let bob_hist = store.get_history("bob", 10).expect("bob hist");
+    assert_eq!(alice_hist.len(), 2);
+    assert_eq!(bob_hist.len(), 2);
+    assert_eq!(alice_hist[0].1, "Retry msg");
+    assert_eq!(bob_hist[0].1, "Hi from Bob");
+}
