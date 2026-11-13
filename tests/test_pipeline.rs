@@ -40,3 +40,28 @@ impl LLMProvider for MockProvider {
         ready(Ok(ChatResponse { content: text, model: request.model.clone() }))
     }
 }
+
+#[derive(Default)]
+struct MockMemory {
+    entries: Mutex<Vec<(String, String, String)>>,
+}
+
+impl ConversationMemory for MockMemory {
+    fn load_history(&self, user_id: &str, limit: usize) -> Result<Vec<(String, String)>, String> {
+        let all: Vec<_> = self
+            .entries
+            .lock()
+            .expect("lock")
+            .iter()
+            .filter(|(u, _, _)| u == user_id)
+            .map(|(_, r, c)| (r.clone(), c.clone()))
+            .collect();
+        let start = all.len().saturating_sub(limit);
+        Ok(all[start..].to_vec())
+    }
+
+    fn save_message(&self, user_id: &str, role: &str, content: &str) -> Result<(), String> {
+        self.entries.lock().expect("lock").push((user_id.into(), role.into(), content.into()));
+        Ok(())
+    }
+}
