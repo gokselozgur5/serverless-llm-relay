@@ -39,4 +39,19 @@ fn test_runpod_from_config_missing_keys() {
     assert!(serverless_llm_relay::RunpodProvider::from_config(&cfg).is_err());
 }
 
+#[test]
+fn test_runpod_from_config_success() {
+    let cfg = serverless_llm_relay::Config {
+        cohere_api_key: None,
+        runpod_api_key: Some("key123".to_string()),
+        runpod_endpoint_id: Some("ep456".to_string()),
+        default_model: "vllm-model".to_string(),
+        port: 8080,
+    };
+    let provider = serverless_llm_relay::RunpodProvider::from_config(&cfg).unwrap();
+    assert_eq!(provider.api_key, "key123");
+    assert_eq!(provider.endpoint_id, "ep456");
+}
+
+
 
