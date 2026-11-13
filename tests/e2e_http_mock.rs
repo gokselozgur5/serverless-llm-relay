@@ -20,3 +20,27 @@ async fn mock_chat_handler(
         model: req.model,
     }))
 }
+
+async fn spawn_mock_upstream(should_fail: bool) -> String {
+    let app = Router::new()
+        .route("/v1/chat", post(mock_chat_handler))
+        .with_state(should_fail);
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let addr = listener.local_addr().expect("addr");
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.expect("serve");
+    });
+    format!("http://{addr}/v1/chat")
+}
+
+fn build_http_chat_request(store: &MemoryStore, user_id: &str, text: &str) -> ChatRequest {
+    let mut messages = vec![ChatMessage {
+        role: "system".to_string(),
+        content: format_prompt(ALARA_DEFAULT_PERSONA, user_id),
+    }];
+    for (role, content) in store.get_history(user_id, 10).expect("history") {
+        messages.push(ChatMessage { role, content });
+    }
+    messages.push(ChatMessage { role: "user".to_string(), content: text.to_string() });
+    ChatRequest { messages, model: "mock-vllm".to_string(), temperature: 0.5, max_tokens: 128 }
+}
