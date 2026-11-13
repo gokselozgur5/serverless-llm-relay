@@ -36,3 +36,21 @@ Telegram Update JSON
 | `telegram` | `src/telegram.rs` | Parses inbound Telegram `Update` payloads and formats outbound `sendMessage` bodies. |
 | `pipeline` | `src/pipeline.rs` | Orchestrates memory lookup, persona injection, LLM invocation, and history persistence. |
 | `gateway` | `src/gateway.rs` | Exposes Axum HTTP routes (`GET /health` and `POST /webhook/telegram`). |
+
+## Memory Store and Companion Persona
+
+`MemoryStore` wraps an embedded SQLite connection (`rusqlite` with `bundled` feature) and initializes the `history` table automatically:
+
+```sql
+CREATE TABLE IF NOT EXISTS history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL
+);
+```
+
+- **User Isolation:** Every query scopes rows strictly by `user_id` (mapped from the webhook chat or user identifier).
+- **Chronological Context Window:** `get_history(user_id, limit)` selects the most recent `limit` rows using `ORDER BY id DESC LIMIT ?2` and reverses the slice in memory so the LLM receives turns in chronological order.
+- **Companion Metadata Models:** `EmotionalArc` (`start_tone`, `current_tone`, `intimacy_level`) and `KeyMoment` (`timestamp_epoch_s`, `summary`, `emotional_significance`) model longitudinal relationship state.
+- **System Prompt Formatting:** `persona::format_prompt(persona, user_name)` combines the base persona template (`ALARA_DEFAULT_PERSONA` or custom override) with user-specific addressing directives as the leading `system` message.
