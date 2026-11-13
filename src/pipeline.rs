@@ -135,3 +135,14 @@ impl<P: LLMProvider, M: ConversationMemory> RelayPipeline<P, M> {
     pub fn memory(&self) -> &M { &self.memory }
     pub fn provider(&self) -> &P { &self.provider }
 }
+
+impl LLMProvider for crate::cohere::CohereProvider {
+    type Error = crate::cohere::CohereError;
+
+    fn complete(
+        &self,
+        request: &ChatRequest,
+    ) -> impl std::future::Future<Output = Result<ChatResponse, Self::Error>> + Send {
+        crate::cohere::CohereProvider::complete(self, request)
+    }
+}
