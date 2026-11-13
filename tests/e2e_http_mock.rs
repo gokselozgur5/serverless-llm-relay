@@ -44,3 +44,19 @@ fn build_http_chat_request(store: &MemoryStore, user_id: &str, text: &str) -> Ch
     messages.push(ChatMessage { role: "user".to_string(), content: text.to_string() });
     ChatRequest { messages, model: "mock-vllm".to_string(), temperature: 0.5, max_tokens: 128 }
 }
+
+#[tokio::test]
+async fn test_http_mock_end_to_end_cycle() {
+    let url = spawn_mock_upstream(false).await;
+    let store = MemoryStore::new_in_memory().expect("store");
+    let client = reqwest::Client::new();
+    let req = build_http_chat_request(&store, "selin", "Stay close");
+    let http_resp = client.post(&url).json(&req).send().await.expect("send");
+    assert_eq!(http_resp.status(), StatusCode::OK);
+    let body: ChatResponse = http_resp.json().await.expect("decode");
+    assert_eq!(body.content, "echo:Stay close");
+    store.add_message("selin", "user", "Stay close").expect("save user");
+    store.add_message("selin", "assistant", &body.content).expect("save assistant");
+    let second_req = build_http_chat_request(&store, "selin", "Next turn");
+    assert_eq!(second_req.messages.len(), 4);
+}
