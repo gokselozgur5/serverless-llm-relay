@@ -3,6 +3,7 @@ pub mod config;
 pub mod gateway;
 pub mod memory;
 pub mod persona;
+pub mod pipeline;
 pub mod provider;
 pub mod runpod;
 pub mod telegram;
