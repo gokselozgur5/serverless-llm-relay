@@ -1,3 +1,6 @@
+use std::fmt::Display;
+use std::future::Future;
+
 use serde::{Deserialize, Serialize};
 
 pub use crate::runpod::RunpodProvider;
@@ -20,4 +23,13 @@ pub struct ChatRequest {
 pub struct ChatResponse {
     pub content: String,
     pub model: String,
+}
+
+pub trait LLMProvider: Send + Sync {
+    type Error: Display + Send + Sync + 'static;
+
+    fn complete(
+        &self,
+        request: &ChatRequest,
+    ) -> impl Future<Output = Result<ChatResponse, Self::Error>> + Send;
 }
