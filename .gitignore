@@ -8,3 +8,5 @@ env/
 venv/
 *.log
 .pytest_cache/
+target/
+Cargo.lock
