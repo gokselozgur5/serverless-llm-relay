@@ -27,3 +27,16 @@ fn test_extract_content_text_field() {
     assert_eq!(extract_content(&val), Some("plain object text".to_string()));
 }
 
+#[test]
+fn test_runpod_from_config_missing_keys() {
+    let cfg = serverless_llm_relay::Config {
+        cohere_api_key: None,
+        runpod_api_key: None,
+        runpod_endpoint_id: None,
+        default_model: "vllm-model".to_string(),
+        port: 8080,
+    };
+    assert!(serverless_llm_relay::RunpodProvider::from_config(&cfg).is_err());
+}
+
+
