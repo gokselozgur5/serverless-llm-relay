@@ -60,3 +60,15 @@ async fn test_http_mock_end_to_end_cycle() {
     let second_req = build_http_chat_request(&store, "selin", "Next turn");
     assert_eq!(second_req.messages.len(), 4);
 }
+
+#[tokio::test]
+async fn test_http_mock_upstream_unavailable_preserves_state() {
+    let url = spawn_mock_upstream(true).await;
+    let store = MemoryStore::new_in_memory().expect("store");
+    let client = reqwest::Client::new();
+    let req = build_http_chat_request(&store, "selin", "Ping");
+    let http_resp = client.post(&url).json(&req).send().await.expect("send");
+    assert_eq!(http_resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let history = store.get_history("selin", 10).expect("history");
+    assert!(history.is_empty());
+}
