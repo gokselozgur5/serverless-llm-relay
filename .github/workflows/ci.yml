@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [feat-ci-workflow]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust
+      uses: actions/setup-rust@v1
+      with:
+        rust-version: stable
+    - name: Cargo check
+      run: cargo check --verbose
+    - name: Cargo test
+      run: cargo test --verbose
+    - name: Clippy lint
+      run: cargo clippy -- -D warnings
+    - name: Verify atomic commits
+      run: |
+        curl -s https://raw.githubusercontent.com/gok/verify-atomic/main/verify_atomic.sh | bash
