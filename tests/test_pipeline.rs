@@ -65,3 +65,26 @@ impl ConversationMemory for MockMemory {
         Ok(())
     }
 }
+
+#[tokio::test]
+async fn test_pipeline_with_mock_memory_and_provider() {
+    let memory = MockMemory::default();
+    memory.save_message("u1", "user", "Hi").expect("seed");
+    memory.save_message("u1", "assistant", "Welcome back").expect("seed");
+    let pipeline = RelayPipeline::new(memory, MockProvider::new(&["Warm reply"]))
+        .with_persona("Custom companion persona.")
+        .with_model("command-r-plus")
+        .with_generation_params(0.4, 256);
+
+    let resp = pipeline.process("u1", "Alex", "How are you?").await.expect("process");
+    assert_eq!(resp.content, "Warm reply");
+    assert_eq!(resp.model, "command-r-plus");
+
+    let reqs = pipeline.provider().requests.lock().expect("lock");
+    assert_eq!(reqs[0].messages.len(), 4);
+    assert_eq!(reqs[0].messages[0].role, "system");
+    assert!(reqs[0].messages[0].content.contains("Alex"));
+    assert_eq!(reqs[0].messages[1].content, "Hi");
+    assert_eq!(reqs[0].messages[3].content, "How are you?");
+    assert_eq!(pipeline.memory().load_history("u1", 10).expect("hist").len(), 4);
+}
